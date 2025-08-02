@@ -10,22 +10,32 @@ class UploadsHandler {
     autoBind(this);
   }
 
-  async postUploadImageHandler(request, h) {
+ async postUploadImageHandler(request, h) {
     const { cover } = request.payload;
-    const {id} = request.params;
-    this._validator.validateImageHeaders(cover.hapi.headers);
-
-    const filename = await this._service.writeFile(cover, cover.hapi);
-    const coverUrl = `http://${process.env.HOST}:${process.env.PORT}/upload/images/${filename}`;
-    console.log(coverUrl);
-    await this._albumsService.addAlbumCoverById(id, coverUrl);
-    return h
-      .response({
-        status: 'success',
-        message: 'Gambar berhasil diunggah',
-        data: { filename },
-      })
-      .code(201);
+    const { id } = request.params;
+    this._validator.validateUploadPayload(cover.hapi.headers);
+    try {
+      const filename = await this._service.writeFile(cover, cover.hapi);
+      const coverUrl = `http://${process.env.HOST}:${process.env.PORT}/upload/images/${filename}`;
+      console.log(coverUrl);
+      await this._albumsService.addCoverAlbumById(id, coverUrl);
+      const response = h.response({
+        status: "success",
+        message: "Sampul berhasil diunggah",
+        data: {
+          coverUrl: coverUrl,
+        },
+      });
+      response.code(201);
+      return response;
+    } catch (err) {
+      return h
+        .response({
+          status: "fail",
+          message: err.message,
+        })
+        .code(500);
+    }
   }
 }
 

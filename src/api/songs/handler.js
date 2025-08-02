@@ -1,10 +1,12 @@
+const songs = require(".");
+
 class SongsHandler {
-  constructor(SongsService, validator) {
-    this._service = SongsService;
+  constructor(service, validator) {
+    this._service = service;
     this._validator = validator;
 
     this.postSongHandler = this.postSongHandler.bind(this);
-    this.getSongsHandler = this.getSongsHandler.bind(this);
+    // this.getSongsHandler = this.getSongsHandler.bind(this);
     this.getSongByIdHandler = this.getSongByIdHandler.bind(this);
     this.putSongByIdHandler = this.putSongByIdHandler.bind(this);
     this.deleteSongByIdHandler = this.deleteSongByIdHandler.bind(this);
@@ -31,22 +33,21 @@ class SongsHandler {
     return response;
   }
 
-  async getSongsHandler(request) {
-    const { title, performer } = request.query;
-    const songs = await this._service.getSongs({ title, performer });
-    const simplifiedSongs = songs.map(({ id, title, performer }) => ({ id, title, performer }));
+  getSongsHandler = async (request) => {
+    const songs = await this._service.getSongs(request.query);
+    console.log(songs)
     return {
-      status: 'success',
-      data: { songs: simplifiedSongs },
+      status: "success",
+      data: { songs },
     };
-  }
+  };
 
   async getSongByIdHandler(request) {
     const { id } = request.params;
     const song = await this._service.getSongById(id);
     return {
       status: 'success',
-      data: { song },
+      data: { songs },
     };
   }
 

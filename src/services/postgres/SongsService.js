@@ -2,7 +2,8 @@ const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/invariantError');
 const NotFoundError = require('../../exceptions/notFoundError');
-const { mapDBToModel } = require('../../utils/index');
+const { mapDBToModel, mapSongSummaryDBToModel } = require('../../utils/index');
+
 
 class SongsService {
   constructor() {
@@ -26,20 +27,31 @@ class SongsService {
     return result.rows[0].id;
   }
 
-  async getSongs(title, performer) {
-    const query = {
-      text: `
-        SELECT id, title, performer
-        FROM songs
-        WHERE title ILIKE $1 OR performer ILIKE $2
-      `,
-      values: [`%${title}%`, `%${performer}%`],
-    };
+  async getSongs({ title, performer }) {
+    let baseQuery = "SELECT id, title, performer FROM songs";
 
-    const result = await this._pool.query(query);
-    return result.rows;
+    const conditions = [];
+    const values = [];
+
+    if (title) {
+      conditions.push(`LOWER(title) LIKE LOWER($${values.length + 1})`);
+      values.push(`%${title}%`);
+    }
+
+    if (performer) {
+      conditions.push(`LOWER(performer) LIKE LOWER($${values.length + 1})`);
+      values.push(`%${performer}%`);
+    }
+
+    if (conditions.length > 0) {
+      baseQuery += " WHERE " + conditions.join(" AND ");
+    }
+
+    const result = await this._pool.query({ text: baseQuery, values });
+
+    return result.rows.map(mapSongSummaryDBToModel);
   }
-
+  
   async getSongsByAlbumId(albumId) {
     const query = {
       text: 'SELECT * FROM songs WHERE album_id = $1',
@@ -48,6 +60,15 @@ class SongsService {
 
     const result = await this._pool.query(query);
     return result.rows.map(mapDBToModel);
+  }
+
+  async verifySongExists(id) {
+    const query = {
+      text: 'SELECT id FROM songs WHERE id = $1',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rows.length) throw new NotFoundError('Lagu tidak ditemukan');
   }
 
   async getSongById(id) {

@@ -2,7 +2,7 @@ require('dotenv').config();
 const path = require('path');
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
-const Inert = require('@hapi/inert'); // ✅ Import Inert plugin
+const Inert = require('@hapi/inert');
 const ClientError = require('./exceptions/clientError');
 
 // Plugins
@@ -17,6 +17,7 @@ const uploads = require('./api/uploads');
 const albumsLikes = require('./api/albumsLike');
 
 // Services
+const CacheService = require('./services/redis/CacheService');
 const AlbumsService = require('./services/postgres/AlbumsService');
 const SongsService = require('./services/postgres/SongsService');
 const UsersService = require('./services/postgres/UsersService');
@@ -26,7 +27,6 @@ const CollaborationsService = require('./services/postgres/CollaborationsService
 const ProducerService = require('./services/rabbitmq/ProducerService');
 const StorageService = require('./services/storage/StorageService');
 const AlbumLikesService = require('./services/postgres/AlbumsLikesService');
-const CacheService = require('./services/redis/CacheService');
 
 // Validators
 const AlbumsValidator = require('./validator/albums');
@@ -41,15 +41,16 @@ const UploadsValidator = require('./validator/uploads');
 const TokenManager = require('./tokenize/TokenManager');
 
 const init = async () => {
+  // 🌟 Order of initialization matters
+  const cacheService = new CacheService();
   const collaborationsService = new CollaborationsService();
-  const albumsService = new AlbumsService();
+  const albumsService = new AlbumsService(cacheService);
   const songsService = new SongsService();
   const usersService = new UsersService();
   const playlistsService = new PlaylistsService(collaborationsService);
   const authenticationsService = new AuthenticationsService();
   const storageService = new StorageService(path.resolve(__dirname, 'api/uploads/file/images'));
-  const albumsLikesService = new AlbumLikesService();
-  const cacheService = new CacheService();
+  const albumsLikesService = new AlbumLikesService(cacheService);
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -59,8 +60,7 @@ const init = async () => {
     },
   });
 
-  await server.register(Jwt);
-  await server.register(Inert); // ✅ Proper registration inside init()
+  await server.register([Jwt, Inert]);
 
   server.auth.strategy('openmusicapp_jwt', 'jwt', {
     keys: process.env.ACCESS_TOKEN_KEY || 'default_key_fallback',
@@ -136,7 +136,7 @@ const init = async () => {
 
   server.ext('onPreResponse', (request, h) => {
     const { response } = request;
-
+    console.log(response)
     if (response instanceof Error) {
       if (response instanceof ClientError) {
         return h.response({
@@ -157,7 +157,7 @@ const init = async () => {
   });
 
   await server.start();
-  console.log(`Server berjalan di ${server.info.uri}`);
+  console.log(`🚀 Server berjalan di ${server.info.uri}`);
 };
 
 init();

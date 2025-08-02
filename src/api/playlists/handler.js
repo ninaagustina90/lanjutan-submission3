@@ -9,7 +9,25 @@ class PlaylistsHandler {
     autoBind(this);
   }
 
+  
+  async postSongToPlaylistHandler(request, h) {
+    this._validator.validatePlaylistSongPayload(request.payload);
+    const { songId } = request.payload;
+    const { playlistId } = request.params;
+    const { id: credentialId } = request.auth.credentials;
 
+    await this._playlistsService.verifyPlaylistOwner(playlistId, credentialId);
+    await this._songsService.verifySongExists(songId);
+
+    await this._playlistSongsService.addSongToPlaylist({ playlistId, songId });
+
+    const response = h.response({
+      status: 'success',
+      message: 'Lagu berhasil ditambahkan ke playlist',
+    });
+    response.code(201);
+    return response;
+  }
 
   async postPlaylistHandler(request, h) {
     this._validator.validatePlaylistPayload(request.payload);

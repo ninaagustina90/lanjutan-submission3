@@ -1,25 +1,24 @@
-const { Pool } = require('pg');
-const { nanoid } = require('nanoid');
+const {Pool} = require('pg');
+const {nanoid} = require('nanoid');
 const InvariantError = require('../../exceptions/invariantError');
+const {mapAlbumDBToModel, mapSongDBToModel} = require('../../utils/index');
 const NotFoundError = require('../../exceptions/notFoundError');
-const {mapAlbumDBToModel, mapSongDBToModel} = require('../../utils');
 
 class AlbumsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
-  async addAlbum({ name, year }) {
+  async addAlbum({name, year}) {
     const id = `album-${nanoid(16)}`;
-
     const query = {
-      text: 'INSERT INTO albums VALUES ($1, $2, $3) RETURNING id',
+      text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
       values: [id, name, year],
     };
 
     const result = await this._pool.query(query);
-
-    if (!result.rows[0]?.id) {
+    if (!result.rows[0].id) {
       throw new InvariantError('Album gagal ditambahkan');
     }
 
@@ -40,15 +39,14 @@ class AlbumsService {
     return result.rows.map(mapAlbumDBToModel)[0];
   }
 
-  async editAlbumById(id, { name, year }) {
+  async editAlbumById(id, {name, year}) {
     const query = {
       text: 'UPDATE albums SET name = $1, year = $2 WHERE id = $3 RETURNING id',
       values: [name, year, id],
     };
-
     const result = await this._pool.query(query);
 
-    if (!result.rowCount) {
+    if (!result.rows.length) {
       throw new NotFoundError('Gagal memperbarui album. Id tidak ditemukan');
     }
   }
@@ -60,8 +58,7 @@ class AlbumsService {
     };
 
     const result = await this._pool.query(query);
-
-    if (!result.rowCount) {
+    if (!result.rows.length) {
       throw new NotFoundError('Album gagal dihapus. Id tidak ditemukan');
     }
   }
@@ -73,16 +70,17 @@ class AlbumsService {
     };
     const result = await this._pool.query(query);
     return result.rows.map(mapSongDBToModel);
-}
+  }
 
-async addCoverAlbumById(id, coverUrl) {
+  async addCoverAlbumById(id, coverUrl) {
     const query = {
-      text: 'UPDATE albums SET "coverUrl = $1 WHERE id = $2 RETURNING id',
+      text: 'UPDATE albums SET "cover" = $1 WHERE id = $2 RETURNING id',
       values: [coverUrl, id],
     };
     const result = await this._pool.query(query);
+
     if (!result.rows.length) {
-      throw new NotFoundError('Gagal memperbarui cover album. Id tidak ditemukan');
+      throw new NotFoundError('Gagal memperbarui cover. Id tidak ditemukan');
     }
   }
 }
