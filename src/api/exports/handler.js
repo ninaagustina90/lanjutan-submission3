@@ -1,14 +1,12 @@
 const ClientError = require('../../exceptions/clientError');
 
-const autoBind = require('auto-bind').default;
-
 class ExportsHandler {
   constructor(service, validator, playlistsService) {
     this._service = service;
     this._validator = validator;
     this._playlistsService = playlistsService;
 
-    autoBind(this);
+    this.postExportHandler = this.postExportHandler.bind(this);
   }
 
   async postExportHandler(request, h) {

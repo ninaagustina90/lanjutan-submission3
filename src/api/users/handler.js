@@ -1,11 +1,11 @@
-const autoBind = require('auto-bind').default;
-
 class UsersHandler {
   constructor(service, validator) {
     this._service = service;
     this._validator = validator;
 
-    autoBind(this);
+    this.postUserHandler = this.postUserHandler.bind(this);
+    this.getUserByIdHandler = this.getUserByIdHandler.bind(this);
+    this.getUsersByUsernameHandler = this.getUsersByUsernameHandler.bind(this);
   }
 
   async postUserHandler(request, h) {

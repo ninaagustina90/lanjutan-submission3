@@ -7,7 +7,7 @@ class UploadsHandler {
     this._validator = validator;
     this._albumsService = albumsService;
 
-    autoBind(this);
+    this.postUploadImageHandler = this.postUploadImageHandler.bind(this);
   }
 
  async postUploadImageHandler(request, h) {
@@ -16,7 +16,7 @@ class UploadsHandler {
     this._validator.validateUploadPayload(cover.hapi.headers);
     try {
       const filename = await this._service.writeFile(cover, cover.hapi);
-      const coverUrl = `http://${process.env.HOST}:${process.env.PORT}/upload/images/${filename}`;
+      const coverUrl = `http://${process.env.HOST}:${process.env.PORT}/albums/${id}/images/${filename}`;
       console.log(coverUrl);
       await this._albumsService.addCoverAlbumById(id, coverUrl);
       const response = h.response({

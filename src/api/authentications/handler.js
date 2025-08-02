@@ -1,5 +1,3 @@
-const autoBind = require('auto-bind').default;
-
 class AuthenticationsHandler {
   constructor(authenticationsService, usersService, tokenManager, validator) {
     this._authenticationsService = authenticationsService;
@@ -7,7 +5,9 @@ class AuthenticationsHandler {
     this._tokenManager = tokenManager;
     this._validator = validator;
 
-    autoBind(this);
+    this.postAuthenticationHandler = this.postAuthenticationHandler.bind(this);
+    this.putAuthenticationHandler = this.putAuthenticationHandler.bind(this);
+    this.deleteAuthenticationHandler = this.deleteAuthenticationHandler.bind(this);
   }
 
   async postAuthenticationHandler(request, h) {

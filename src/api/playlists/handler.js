@@ -1,12 +1,18 @@
-const autoBind = require('auto-bind').default;
-
 class PlaylistsHandler {
   constructor(playlistsService, songsService, validator) {
     this._playlistsService = playlistsService;
     this._songsService = songsService;
     this._validator = validator;
 
-    autoBind(this);
+    this.postPlaylistHandler = this.postPlaylistHandler.bind(this);
+    this.getPlaylistsHandler = this.getPlaylistsHandler.bind(this);
+    this.deletePlaylistByIdHandler = this.deletePlaylistByIdHandler.bind(this);
+
+    this.getPlaylistActivitiesByIdHandler = this.getPlaylistActivitiesByIdHandler.bind(this);
+    this.deletePlaylistSongsByIdHandler = this.deletePlaylistSongsByIdHandler.bind(this);
+    this.getPlaylistSongsByIdHandler = this.getPlaylistSongsByIdHandler.bind(this);
+    this.postPlaylistSongByIdHandler = this.postPlaylistSongByIdHandler.bind(this);
+    this.postSongToPlaylistHandler = this.postSongToPlaylistHandler.bind(this);
   }
 
   
