@@ -2,7 +2,7 @@ const { Pool } = require('pg');
 const { nanoid } = require('nanoid');
 const InvariantError = require('../../exceptions/invariantError');
 const NotFoundError = require('../../exceptions/notFoundError');
-const { mapDBToModel } = require('../../utils');
+const { mapDBToModel } = require('../../utils/index');
 
 class SongsService {
   constructor() {
